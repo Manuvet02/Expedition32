@@ -54,8 +54,10 @@ export default function Title() {
       const { data, error } = await supabase
         .from("titles")
         .insert({
-          source: details.source,
-          external_id: details.external_id,
+          // L'URL contiene gli identificatori canonici restituiti dalla ricerca.
+          // I dettagli API servono per i metadati e potrebbero usare un formato diverso.
+          source,
+          external_id: externalId,
           name: details.name,
           year: details.year,
           poster_url: details.poster_url,
@@ -68,8 +70,8 @@ export default function Title() {
         const { data: again } = await supabase
           .from("titles")
           .select("id")
-          .eq("source", details.source)
-          .eq("external_id", details.external_id)
+          .eq("source", source)
+          .eq("external_id", externalId)
           .maybeSingle();
         titleId = again?.id;
       } else {
@@ -96,61 +98,99 @@ export default function Title() {
     );
 
     setSaving(false);
+    console.log("save review", { error });
     if (error) alert("Salvataggio non riuscito, riprova.");
     else reload();
   }
 
-  if (loading) return <p>Carico…</p>;
-  if (detailsError) return <p>Non riesco a caricare questo titolo.</p>;
-  if (!details) return <p>Carico i dettagli…</p>;
+  if (loading) return <p className="search-message">Carico voti e recensioni…</p>;
+  if (detailsError) return <p className="search-message">Non riesco a caricare questo titolo.</p>;
+  if (!details) return <p className="search-message">Carico i dettagli…</p>;
 
   const avg = reviews.length
     ? Math.round(reviews.reduce((s, r) => s + r.score, 0) / reviews.length)
     : null;
+  const isGame = details.source === "rawg_game";
+  const sourceRating = typeof details.rating === "number"
+    ? `${details.rating.toFixed(1)}${isGame ? "/5 RAWG" : "/10 TMDB"}`
+    : null;
+  const detailFacts = [
+    details.year ? String(details.year) : null,
+    details.meta,
+    sourceRating,
+    typeof details.metacritic === "number" ? `Metacritic ${details.metacritic}/100` : null,
+    details.esrb_rating ? `Classificazione ${details.esrb_rating}` : null,
+  ].filter((value): value is string => Boolean(value));
 
   return (
-    <>
-      <div style={{ display: "flex", gap: 16 }}>
+    <article className="title-page">
+      <div className="title-detail-hero">
         {details.poster_url && (
-          <img src={details.poster_url} alt="" width={120} />
+          <img className="title-poster" src={details.poster_url} alt={`Copertina di ${details.name}`} />
         )}
-        <div>
-          <h2 style={{ marginTop: 0 }}>{details.name}</h2>
-          <small>
-            {[details.year, details.meta].filter(Boolean).join(" · ")}
-          </small>
-          {details.genres.length > 0 && <p>{details.genres.join(", ")}</p>}
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div className="title-info">
+          <p className="eyebrow">SCHEDA OPERA</p>
+          <h1>{details.name}</h1>
+          <div className="title-meta">
+            {detailFacts.map((fact) => <span key={fact}>{fact}</span>)}
+          </div>
+          {details.genres?.length > 0 && <p className="title-genres">{details.genres.join(" · ")}</p>}
+          {details.rating_count != null && <p className="title-source-count">Valutazione esterna · {details.rating_count.toLocaleString("it-IT")} voti</p>}
+          <div className="title-group-score">
             <ScoreBadge score={avg} size={56} />
-            <small>{reviews.length} voti del gruppo</small>
+            <small>{reviews.length} {reviews.length === 1 ? "voto del gruppo" : "voti del gruppo"}</small>
           </div>
         </div>
       </div>
 
-      {details.overview && <p>{details.overview}</p>}
+      {details.overview && <p className="title-overview">{details.overview}</p>}
 
-      <section>
-        <h3>{mine ? "Il tuo voto" : "Lascia il tuo voto"}</h3>
-        <ScoreSlider value={score} onChange={setScore} />
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          placeholder="Due righe, se ti va (puoi anche aggiungerle dopo)"
-          rows={3}
-          style={{ width: "100%", marginTop: 8, boxSizing: "border-box" }}
-        />
-        <button onClick={save} disabled={saving}>
-          {saving ? "Salvo…" : mine ? "Aggiorna" : "Salva voto"}
-        </button>
+      {(details.director || details.creators?.length || details.cast?.length || details.platforms?.length || details.developers?.length || details.publishers?.length || details.episode_count != null || details.trailer_url || details.website) && (
+        <section className="title-facts" aria-label="Informazioni aggiuntive">
+          {details.director && <p><strong>Regia</strong><span>{details.director}</span></p>}
+          {!!details.creators?.length && <p><strong>Creato da</strong><span>{details.creators.join(", ")}</span></p>}
+          {!!details.developers?.length && <p><strong>Sviluppato da</strong><span>{details.developers.join(", ")}</span></p>}
+          {!!details.publishers?.length && <p><strong>Pubblicato da</strong><span>{details.publishers.join(", ")}</span></p>}
+          {!!details.platforms?.length && <p><strong>Piattaforme</strong><span>{details.platforms.join(", ")}</span></p>}
+          {details.episode_count != null && <p><strong>Episodi</strong><span>{details.episode_count}</span></p>}
+          {!!details.cast?.length && <p><strong>Cast</strong><span>{details.cast.join(", ")}</span></p>}
+          <div className="title-external-links">
+            {details.trailer_url && <a href={details.trailer_url} target="_blank" rel="noreferrer">Guarda il trailer ↗</a>}
+            {details.website && <a href={details.website} target="_blank" rel="noreferrer">Sito ufficiale ↗</a>}
+          </div>
+        </section>
+      )}
+
+      <section className="title-section">
+        <p className="eyebrow">IL TUO PUNTO DI VISTA</p>
+        <h2>{mine ? "La tua recensione" : "Lascia una recensione"}</h2>
+        <div className="review-form">
+          <ScoreSlider value={score} onChange={setScore} />
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Cosa ti è rimasto? Puoi scrivere un commento o una recensione…"
+            rows={3}
+            aria-label="La tua recensione"
+          />
+          <div className="review-form-actions">
+            <button onClick={save} disabled={saving}>
+              {saving ? "Salvo…" : mine ? "Aggiorna recensione" : "Pubblica recensione"}
+            </button>
+          </div>
+        </div>
       </section>
 
-      <section>
-        <h3>Voti del gruppo</h3>
+      <section className="title-section">
+        <p className="eyebrow">ALTRI PUNTI DI VISTA</p>
+        <h2>Recensioni del gruppo</h2>
         {reviews.length === 0 && <p>Nessun voto ancora: apri tu le danze.</p>}
-        {reviews.map((r) => (
-          <ReviewCard key={r.id} review={r} />
-        ))}
+        <div className="review-list">
+          {reviews.map((r) => (
+            <ReviewCard key={r.id} review={r} />
+          ))}
+        </div>
       </section>
-    </>
+    </article>
   );
 }

@@ -6,13 +6,17 @@ export default function Search() {
   const navigate = useNavigate();
 
   return (
-    <>
-      <h2>Cerca</h2>
+    <div className="search-page">
+      <header className="page-heading">
+        <p className="eyebrow">ESPLORA L’ARCHIVIO</p>
+        <h1>Cerca un’opera.</h1>
+        <p>Trova un titolo, leggi i pareri del gruppo e aggiungi il tuo punto di vista.</p>
+      </header>
       <SearchTitles
         onPick={(r: SearchResult) =>
           navigate(`/title/${r.source}/${r.external_id}`)
         }
       />
-    </>
+    </div>
   );
 }

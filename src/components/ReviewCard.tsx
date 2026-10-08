@@ -5,13 +5,13 @@ import type { ReviewWithProfile } from "../types";
 
 export default function ReviewCard({ review }: { review: ReviewWithProfile }) {
   return (
-    <article style={{ display: "flex", gap: 12, padding: "12px 0" }}>
+    <article className="review-card">
       <ScoreBadge score={review.score} />
-      <div>
-        <Link to={`/u/${review.user_id}`}>
+      <div className="review-card-copy">
+        <Link className="review-card-author" to={`/u/${review.user_id}`}>
           <strong>{review.profiles?.display_name ?? "Anonimo"}</strong>
         </Link>
-        <small> · {formatDate(review.updated_at)}</small>
+        <small className="review-card-date"> · {formatDate(review.updated_at)}</small>
         {review.body && <p>{review.body}</p>}
       </div>
     </article>

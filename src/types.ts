@@ -1,4 +1,4 @@
-export type TitleSource = "TMDB_Movie" | "TMDB_Tv" | "RAWG_Game";
+export type TitleSource = "tmdb_movie" | "tmdb_tv" | "rawg_game";
 
 // Quello che restituisce la funzione di ricerca (non ancora salvato nel db)
 export interface SearchResult {
@@ -7,6 +7,13 @@ export interface SearchResult {
   name: string;
   year: number | null;
   poster_url: string | null;
+  /** Punteggio della fonte esterna: TMDB /10, RAWG /5. */
+  rating?: number | null;
+  rating_count?: number | null;
+  /** RAWG: punteggio Metacritic /100. */
+  metacritic?: number | null;
+  /** RAWG: piattaforme principali restituite dalla ricerca. */
+  platforms?: string[];
 }
 
 // Riga della tabella titles
@@ -42,4 +49,15 @@ export interface TitleDetails extends SearchResult {
   overview: string | null;
   genres: string[];
   meta: string | null;
+  runtime_minutes?: number | null;
+  season_count?: number | null;
+  episode_count?: number | null;
+  director?: string | null;
+  creators?: string[];
+  cast?: string[];
+  trailer_url?: string | null;
+  developers?: string[];
+  publishers?: string[];
+  esrb_rating?: string | null;
+  website?: string | null;
 }

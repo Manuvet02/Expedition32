@@ -4,53 +4,85 @@ import { supabase } from "../supabase";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle",
-  );
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [resetSent, setResetSent] = useState(false);
 
+  if (loading) return <p className="search-message">Controllo l'accesso…</p>;
   if (session) return <Navigate to="/" replace />;
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setStatus("sending");
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: false, // solo utenti già invitati
-        emailRedirectTo: window.location.origin,
-      },
+    setSubmitting(true);
+    setMessage("");
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
     });
-    if (error) {
-      setStatus("error");
-      setMessage(
-        "Non riesco a mandare il link. Sei stato invitato con questa email?",
-      );
-    } else {
-      setStatus("sent");
-    }
+
+    setSubmitting(false);
+    if (error) setMessage("Email o password non corretti.");
   }
 
-  if (status === "sent") {
-    return <p>Controlla la posta: ti ho mandato il link per entrare ✉️</p>;
+  async function sendPasswordReset() {
+    if (!email.trim()) {
+      setMessage("Inserisci prima la tua email.");
+      return;
+    }
+
+    setSubmitting(true);
+    setMessage("");
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setSubmitting(false);
+
+    if (error) setMessage("Non riesco a inviare il link di recupero.");
+    else setResetSent(true);
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>Accedi</h1>
-      <input
-        type="email"
-        required
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="la tua email"
-      />
-      <button disabled={status === "sending"}>
-        {status === "sending" ? "Invio…" : "Mandami il link"}
-      </button>
-      {status === "error" && <p>{message}</p>}
-    </form>
+    <div className="auth-page">
+      <form className="auth-card" onSubmit={handleSubmit}>
+        <p className="eyebrow">UN POSTO PER IL NOSTRO GRUPPO</p>
+        <h1>Accedi.</h1>
+        <p>Entra nella raccolta condivisa delle nostre storie preferite.</p>
+        <label>
+          Email
+          <input
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="la tua email"
+          />
+        </label>
+        <label>
+          Password
+          <input
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="La tua password"
+          />
+        </label>
+        <button disabled={submitting}>
+          {submitting ? "Accesso…" : "Accedi"}
+        </button>
+        <button className="auth-secondary" type="button" onClick={sendPasswordReset} disabled={submitting}>
+          Imposta o recupera la password
+        </button>
+        {resetSent && <p className="auth-message">Se l'email è registrata, riceverai un link per impostare la password.</p>}
+        {message && <p className="auth-message" role="alert">{message}</p>}
+        <p>Gli account sono riservati alle persone invitate dal gruppo.</p>
+      </form>
+    </div>
   );
 }

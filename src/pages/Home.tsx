@@ -19,25 +19,31 @@ export default function Home() {
       });
   }, []);
 
-  if (loading) return <p>Carico…</p>;
+  if (loading) return <p className="search-message">Carico le ultime recensioni…</p>;
 
   return (
-    <>
-      <h2>Ultimi voti</h2>
-      {items.length === 0 && (
-        <p>Ancora niente: vai su Cerca e vota il primo titolo.</p>
-      )}
-      {items.map(
-        (r) =>
-          r.titles && (
-            <TitleCard
-              key={r.id}
-              title={r.titles}
-              score={r.score}
-              note={`${r.profiles?.display_name ?? "Qualcuno"} ha votato`}
-            />
-          ),
-      )}
-    </>
+    <div className="feed-page">
+      <header className="page-heading">
+        <p className="eyebrow">IL NOSTRO DIARIO</p>
+        <h1>Le ultime recensioni.</h1>
+        <p>Film, serie e videogiochi: un’opera, tante prospettive.</p>
+      </header>
+      <div className="feed-list">
+        {items.length === 0 && (
+          <p className="search-message">Ancora niente: vai su Cerca e lascia la prima recensione.</p>
+        )}
+        {items.map(
+          (r) =>
+            r.titles && (
+              <TitleCard
+                key={r.id}
+                title={r.titles}
+                score={r.score}
+                note={`${r.profiles?.display_name ?? "Qualcuno"} ha votato`}
+              />
+            ),
+        )}
+      </div>
+    </div>
   );
 }

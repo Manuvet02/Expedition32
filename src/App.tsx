@@ -2,6 +2,8 @@ import { Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
+import CompleteProfile from "./pages/CompleteProfile";
 import Home from "./pages/Home";
 import Search from "./pages/Search";
 import Title from "./pages/Title";
@@ -12,6 +14,8 @@ export default function App() {
     <Routes>
       {/* pubblica */}
       <Route path="/login" element={<Login />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/complete-profile" element={<CompleteProfile />} />
 
       {/* protette: serve essere loggati */}
       <Route

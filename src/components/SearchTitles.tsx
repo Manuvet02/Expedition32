@@ -3,9 +3,9 @@ import { supabase } from "../supabase";
 import type { SearchResult, TitleSource } from "../types";
 
 const SECTIONS: { key: string; label: string; sources: TitleSource[] }[] = [
-  { key: "movie", label: "Film", sources: ["TMDB_Movie"] },
-  { key: "tv", label: "Serie TV", sources: ["TMDB_Tv"] },
-  { key: "game", label: "Giochi", sources: ["RAWG_Game"] },
+  { key: "movie", label: "Film", sources: ["tmdb_movie"] },
+  { key: "tv", label: "Serie TV", sources: ["tmdb_tv"] },
+  { key: "game", label: "Giochi", sources: ["rawg_game"] },
 ];
 
 const KNOWN_SOURCES: string[] = SECTIONS.flatMap((s) => s.sources);
@@ -39,8 +39,6 @@ export default function SearchTitles({ onPick }: Props) {
       });
       if (cancelled) return;
 
-      console.log("risposta ricerca:", { data, error }); // toglilo quando tutto funziona
-
       if (error) {
         setError("La ricerca non è riuscita. Riprova tra poco.");
         setResults([]);
@@ -64,52 +62,56 @@ export default function SearchTitles({ onPick }: Props) {
   const others = results.filter((r) => !KNOWN_SOURCES.includes(r.source));
 
   const renderItem = (r: SearchResult) => (
-    <li
+    <li className="search-result-item"
       key={r.source + r.external_id}
-      onClick={() => onPick(r)}
-      style={{
-        display: "flex",
-        gap: 12,
-        alignItems: "center",
-        padding: "8px 0",
-        cursor: "pointer",
-        textAlign: "left",
-      }}
     >
-      {r.poster_url && <img src={r.poster_url} alt="" width={48} />}
-      <span style={{ flex: 1 }}>{r.name}</span>
-      <small>{r.year ?? "—"}</small>
+      <button className="search-result" type="button" onClick={() => onPick(r)}>
+        {r.poster_url && <img src={r.poster_url} alt="" width={48} />}
+        <span className="search-result-copy">
+          <span className="search-result-name">{r.name}</span>
+          <span className="search-result-details">
+            {r.year ?? "Anno sconosciuto"}
+            {r.platforms?.length ? ` · ${r.platforms.join(", ")}` : ""}
+          </span>
+        </span>
+        <span className="search-result-ratings">
+          {typeof r.rating === "number" && (
+            <small title={`Valutazione della fonte · ${r.rating_count ?? 0} voti`}>
+              ★ {r.rating.toFixed(1)}{r.source === "tmdb_movie" || r.source === "tmdb_tv" ? "/10" : "/5"}
+            </small>
+          )}
+          {typeof r.metacritic === "number" && (
+            <small title="Punteggio Metacritic">MC {r.metacritic}</small>
+          )}
+        </span>
+      </button>
     </li>
   );
 
   return (
-    <div className="search" style={{ width: "100%" }}>
+    <div className="search-panel">
       <input
+        className="search-input"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Cerca un film, una serie o un gioco…"
-        style={{
-          width: "100%",
-          padding: 12,
-          fontSize: 16,
-          boxSizing: "border-box",
-        }}
+        aria-label="Cerca un film, una serie o un gioco"
       />
 
-      {loading && <p>Cerco…</p>}
-      {error && <p>{error}</p>}
+      {loading && <p className="search-message">Cerco…</p>}
+      {error && <p className="search-message" role="alert">{error}</p>}
       {searched && !loading && !error && results.length === 0 && (
-        <p>Nessun risultato per “{query}”.</p>
+        <p className="search-message">Nessun risultato per “{query}”.</p>
       )}
-      {results.length > 0 && <p>{results.length} risultati</p>}
+      {results.length > 0 && <p className="search-results-count">{results.length} risultati</p>}
 
       {SECTIONS.map(({ key, label, sources }) => {
         const items = results.filter((r) => sources.includes(r.source));
         if (!items.length) return null;
         return (
-          <section key={key}>
+        <section className="search-group" key={key}>
             <h3>{label}</h3>
-            <ul style={{ listStyle: "none", padding: 0 }}>
+            <ul className="search-list">
               {items.map(renderItem)}
             </ul>
           </section>
@@ -117,9 +119,9 @@ export default function SearchTitles({ onPick }: Props) {
       })}
 
       {others.length > 0 && (
-        <section>
+        <section className="search-group">
           <h3>Altri risultati</h3>
-          <ul style={{ listStyle: "none", padding: 0 }}>
+          <ul className="search-list">
             {others.map(renderItem)}
           </ul>
         </section>
