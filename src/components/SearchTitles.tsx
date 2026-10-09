@@ -6,6 +6,8 @@ const SECTIONS: { key: string; label: string; sources: TitleSource[] }[] = [
   { key: "movie", label: "Film", sources: ["tmdb_movie"] },
   { key: "tv", label: "Serie TV", sources: ["tmdb_tv"] },
   { key: "game", label: "Giochi", sources: ["rawg_game"] },
+  { key: "anime", label: "Anime", sources: ["anilist_anime"] },
+  { key: "manga", label: "Manga", sources: ["anilist_manga"] },
 ];
 
 const KNOWN_SOURCES: string[] = SECTIONS.flatMap((s) => s.sources);
@@ -72,12 +74,13 @@ export default function SearchTitles({ onPick }: Props) {
           <span className="search-result-details">
             {r.year ?? "Anno sconosciuto"}
             {r.platforms?.length ? ` · ${r.platforms.join(", ")}` : ""}
+            {r.popularity != null ? ` · ${r.popularity.toLocaleString("it-IT")} nelle liste AniList` : ""}
           </span>
         </span>
         <span className="search-result-ratings">
           {typeof r.rating === "number" && (
             <small title={`Valutazione della fonte · ${r.rating_count ?? 0} voti`}>
-              ★ {r.rating.toFixed(1)}{r.source === "tmdb_movie" || r.source === "tmdb_tv" ? "/10" : "/5"}
+              ★ {r.rating.toFixed(1)}/{r.rating_scale ?? (r.source === "tmdb_movie" || r.source === "tmdb_tv" ? 10 : 5)}
             </small>
           )}
           {typeof r.metacritic === "number" && (

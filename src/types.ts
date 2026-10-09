@@ -1,4 +1,9 @@
-export type TitleSource = "tmdb_movie" | "tmdb_tv" | "rawg_game";
+export type TitleSource =
+  | "tmdb_movie"
+  | "tmdb_tv"
+  | "rawg_game"
+  | "anilist_anime"
+  | "anilist_manga";
 
 // Quello che restituisce la funzione di ricerca (non ancora salvato nel db)
 export interface SearchResult {
@@ -7,13 +12,16 @@ export interface SearchResult {
   name: string;
   year: number | null;
   poster_url: string | null;
-  /** Punteggio della fonte esterna: TMDB /10, RAWG /5. */
+  /** Punteggio della fonte esterna: TMDB /10, RAWG /5, AniList /100. */
   rating?: number | null;
+  rating_scale?: 5 | 10 | 100;
   rating_count?: number | null;
   /** RAWG: punteggio Metacritic /100. */
   metacritic?: number | null;
   /** RAWG: piattaforme principali restituite dalla ricerca. */
   platforms?: string[];
+  /** AniList: numero di utenti che hanno il titolo nelle proprie liste. */
+  popularity?: number | null;
 }
 
 // Riga della tabella titles
@@ -60,4 +68,10 @@ export interface TitleDetails extends SearchResult {
   publishers?: string[];
   esrb_rating?: string | null;
   website?: string | null;
+  format?: string | null;
+  status?: string | null;
+  chapter_count?: number | null;
+  volume_count?: number | null;
+  studios?: string[];
+  external_url?: string | null;
 }

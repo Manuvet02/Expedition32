@@ -110,9 +110,15 @@ export default function Title() {
   const avg = reviews.length
     ? Math.round(reviews.reduce((s, r) => s + r.score, 0) / reviews.length)
     : null;
-  const isGame = details.source === "rawg_game";
+  const ratingScale = details.rating_scale ?? (
+    details.source === "rawg_game" ? 5 :
+    details.source === "anilist_anime" || details.source === "anilist_manga" ? 100 : 10
+  );
+  const ratingSource = details.source.startsWith("anilist_")
+    ? "AniList"
+    : details.source === "rawg_game" ? "RAWG" : "TMDB";
   const sourceRating = typeof details.rating === "number"
-    ? `${details.rating.toFixed(1)}${isGame ? "/5 RAWG" : "/10 TMDB"}`
+    ? `${details.rating.toFixed(1)}/${ratingScale} ${ratingSource}`
     : null;
   const detailFacts = [
     details.year ? String(details.year) : null,
@@ -120,6 +126,10 @@ export default function Title() {
     sourceRating,
     typeof details.metacritic === "number" ? `Metacritic ${details.metacritic}/100` : null,
     details.esrb_rating ? `Classificazione ${details.esrb_rating}` : null,
+    details.format,
+    details.status,
+    details.chapter_count != null ? `${details.chapter_count} capitoli` : null,
+    details.volume_count != null ? `${details.volume_count} volumi` : null,
   ].filter((value): value is string => Boolean(value));
 
   return (
@@ -136,6 +146,7 @@ export default function Title() {
           </div>
           {details.genres?.length > 0 && <p className="title-genres">{details.genres.join(" · ")}</p>}
           {details.rating_count != null && <p className="title-source-count">Valutazione esterna · {details.rating_count.toLocaleString("it-IT")} voti</p>}
+          {details.popularity != null && <p className="title-source-count">Nelle liste di {details.popularity.toLocaleString("it-IT")} utenti AniList</p>}
           <div className="title-group-score">
             <ScoreBadge score={avg} size={56} />
             <small>{reviews.length} {reviews.length === 1 ? "voto del gruppo" : "voti del gruppo"}</small>
@@ -145,18 +156,20 @@ export default function Title() {
 
       {details.overview && <p className="title-overview">{details.overview}</p>}
 
-      {(details.director || details.creators?.length || details.cast?.length || details.platforms?.length || details.developers?.length || details.publishers?.length || details.episode_count != null || details.trailer_url || details.website) && (
+      {(details.director || details.creators?.length || details.cast?.length || details.platforms?.length || details.developers?.length || details.publishers?.length || details.episode_count != null || details.trailer_url || details.website || details.studios?.length || details.external_url) && (
         <section className="title-facts" aria-label="Informazioni aggiuntive">
           {details.director && <p><strong>Regia</strong><span>{details.director}</span></p>}
           {!!details.creators?.length && <p><strong>Creato da</strong><span>{details.creators.join(", ")}</span></p>}
           {!!details.developers?.length && <p><strong>Sviluppato da</strong><span>{details.developers.join(", ")}</span></p>}
           {!!details.publishers?.length && <p><strong>Pubblicato da</strong><span>{details.publishers.join(", ")}</span></p>}
+          {!!details.studios?.length && <p><strong>Studio</strong><span>{details.studios.join(", ")}</span></p>}
           {!!details.platforms?.length && <p><strong>Piattaforme</strong><span>{details.platforms.join(", ")}</span></p>}
           {details.episode_count != null && <p><strong>Episodi</strong><span>{details.episode_count}</span></p>}
           {!!details.cast?.length && <p><strong>Cast</strong><span>{details.cast.join(", ")}</span></p>}
           <div className="title-external-links">
             {details.trailer_url && <a href={details.trailer_url} target="_blank" rel="noreferrer">Guarda il trailer ↗</a>}
             {details.website && <a href={details.website} target="_blank" rel="noreferrer">Sito ufficiale ↗</a>}
+            {details.external_url && <a href={details.external_url} target="_blank" rel="noreferrer">Apri su AniList ↗</a>}
           </div>
         </section>
       )}

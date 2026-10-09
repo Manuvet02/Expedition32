@@ -13,6 +13,8 @@ const CATEGORIES: { source: TitleSource; label: string; icon: string }[] = [
   { source: "tmdb_movie", label: "Film", icon: "▰" },
   { source: "tmdb_tv", label: "Serie TV", icon: "▤" },
   { source: "rawg_game", label: "Giochi", icon: "⌘" },
+  { source: "anilist_anime", label: "Anime", icon: "◉" },
+  { source: "anilist_manga", label: "Manga", icon: "▥" },
 ];
 
 export default function Profile() {
@@ -199,7 +201,7 @@ export default function Profile() {
             <h3>{items.length === 0 ? "La collezione è ancora vuota" : "Nessun risultato"}</h3>
             <p>
               {items.length === 0
-                ? "Quando valuterai un film, una serie o un gioco, lo ritroverai qui."
+                ? "Quando valuterai un film, una serie, un gioco, un anime o un manga, lo ritroverai qui."
                 : "Prova a cambiare categoria o termine di ricerca."}
             </p>
             {items.length === 0 && isOwnProfile && (
