@@ -120,17 +120,34 @@ export default function Title() {
   const sourceRating = typeof details.rating === "number"
     ? `${details.rating.toFixed(1)}/${ratingScale} ${ratingSource}`
     : null;
-  const detailFacts = [
-    details.year ? String(details.year) : null,
-    details.meta,
-    sourceRating,
-    typeof details.metacritic === "number" ? `Metacritic ${details.metacritic}/100` : null,
-    details.esrb_rating ? `Classificazione ${details.esrb_rating}` : null,
-    details.format,
-    details.status,
-    details.chapter_count != null ? `${details.chapter_count} capitoli` : null,
-    details.volume_count != null ? `${details.volume_count} volumi` : null,
-  ].filter((value): value is string => Boolean(value));
+  const isTmdb = details.source === "tmdb_movie" || details.source === "tmdb_tv";
+  const isAnime = details.source === "anilist_anime";
+  const isManga = details.source === "anilist_manga";
+  const detailFacts: { label: string; value: string | null }[] = [
+    { label: "Anno", value: details.year ? String(details.year) : null },
+    {
+      label: details.source === "tmdb_movie" ? "Durata" : details.source === "tmdb_tv" ? "Stagioni" : "",
+      value: isTmdb ? details.meta : null,
+    },
+    {
+      label: "Piattaforme",
+      value: details.source === "rawg_game" ? details.platforms?.join(", ") || details.meta : null,
+    },
+    { label: "Formato", value: isAnime || isManga ? details.format ?? null : null },
+    { label: "Stato", value: isAnime || isManga ? details.status ?? null : null },
+    { label: "Episodi", value: details.episode_count != null ? String(details.episode_count) : null },
+    { label: "Capitoli", value: details.chapter_count != null ? String(details.chapter_count) : null },
+    { label: "Volumi", value: details.volume_count != null ? String(details.volume_count) : null },
+    { label: `Valutazione ${ratingSource}`, value: sourceRating },
+    {
+      label: "Metacritic",
+      value: typeof details.metacritic === "number" ? `${details.metacritic}/100` : null,
+    },
+    { label: "Classificazione", value: details.esrb_rating ?? null },
+  ];
+  const visibleDetailFacts = detailFacts.filter(
+    (fact): fact is { label: string; value: string } => Boolean(fact.label && fact.value),
+  );
 
   return (
     <article className="title-page">
@@ -141,9 +158,16 @@ export default function Title() {
         <div className="title-info">
           <p className="eyebrow">SCHEDA OPERA</p>
           <h1>{details.name}</h1>
-          <div className="title-meta">
-            {detailFacts.map((fact) => <span key={fact}>{fact}</span>)}
-          </div>
+          {visibleDetailFacts.length > 0 && (
+            <dl className="title-meta-grid" aria-label="Dettagli del titolo">
+              {visibleDetailFacts.map((fact) => (
+                <div className="title-meta-item" key={fact.label}>
+                  <dt>{fact.label}</dt>
+                  <dd>{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
           {details.genres?.length > 0 && <p className="title-genres">{details.genres.join(" · ")}</p>}
           {details.rating_count != null && <p className="title-source-count">Valutazione esterna · {details.rating_count.toLocaleString("it-IT")} voti</p>}
           {details.popularity != null && <p className="title-source-count">Nelle liste di {details.popularity.toLocaleString("it-IT")} utenti AniList</p>}
